@@ -7,12 +7,38 @@
 #include <gtest/gtest.h>
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
+#include <fstream> // Added for reading the config file
 
 namespace beast = boost::beast;
 namespace http = beast::http;
 namespace asio = boost::asio;
 namespace ssl = boost::asio::ssl;
 using tcp = boost::asio::ip::tcp;
+
+// Function to read the client secret from config.json
+std::string ReadClientSecretFromConfig() {
+    std::ifstream config_file("config.json");
+    nlohmann::json config_json;
+    
+    if (config_file.is_open()) {
+        try {
+            config_file >> config_json;
+        } catch (const std::exception& ex) {
+            spdlog::error("Failed to parse configuration file: {}", ex.what());
+            return "";
+        }
+    } else {
+        spdlog::error("Failed to open configuration file.");
+        return "";
+    }
+
+    std::string client_secret = config_json.value("client_secret", "");
+    if (client_secret.empty()) {
+        spdlog::error("Client secret not found in the configuration file.");
+    }
+
+    return client_secret;
+}
 
 
 // Base fixture with common setup and teardown
@@ -32,6 +58,13 @@ class MyTestFixture : public BaseTestFixture {
 };
 
 TEST_F(MyTestFixture, TestIsUserLive) {
+    // Read the client secret from config.json
+    std::string client_secret = ReadClientSecretFromConfig();
+    if (client_secret.empty()) {
+        spdlog::error("Client secret not found. Exiting.");
+        return;
+    }
+
     // Create a resolver for the token endpoint
     tcp::resolver token_resolver(io_context);
     tcp::resolver::results_type token_endpoints = token_resolver.resolve("id.twitch.tv", "https");
@@ -46,7 +79,8 @@ TEST_F(MyTestFixture, TestIsUserLive) {
     token_request.set(http::field::host, "id.twitch.tv");
     token_request.set(http::field::content_type, "application/x-www-form-urlencoded");
     std::string client_id = "idebams24qkagk5c7psd0wtsgxa5nx";
-    std::string client_secret = "";
+
+    // Use the extracted client_secret
     token_request.body() = "client_id=" + client_id + "&client_secret=" + client_secret + "&grant_type=client_credentials";
     token_request.prepare_payload();
 
