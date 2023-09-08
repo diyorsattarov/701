@@ -14,6 +14,7 @@ namespace asio = boost::asio;
 namespace ssl = boost::asio::ssl;
 using tcp = boost::asio::ip::tcp;
 
+
 // Base fixture with common setup and teardown
 class BaseTestFixture : public ::testing::Test {
 protected:
@@ -30,112 +31,101 @@ protected:
 class MyTestFixture : public BaseTestFixture {
 };
 
-TEST_F(MyTestFixture, TestHttpClient) {
-    ssl::stream<tcp::socket> socket(io_context, ssl_context);
-    tcp::resolver resolver(io_context);
-    tcp::resolver::results_type endpoints = resolver.resolve("id.twitch.tv", "https");
+TEST_F(MyTestFixture, TestIsUserLive) {
+    // Create a resolver for the token endpoint
+    tcp::resolver token_resolver(io_context);
+    tcp::resolver::results_type token_endpoints = token_resolver.resolve("id.twitch.tv", "https");
+    ssl::stream<tcp::socket> token_socket(io_context, ssl_context);
 
-    boost::asio::connect(socket.next_layer(), endpoints.begin(), endpoints.end());
+    // Connect to the token endpoint
+    boost::asio::connect(token_socket.next_layer(), token_endpoints.begin(), token_endpoints.end());
+    token_socket.handshake(ssl::stream_base::client);
 
-    socket.handshake(ssl::stream_base::client);
+    // Obtain an access token using client credentials
+    http::request<http::string_body> token_request{http::verb::post, "/oauth2/token", 11};
+    token_request.set(http::field::host, "id.twitch.tv");
+    token_request.set(http::field::content_type, "application/x-www-form-urlencoded");
+    std::string client_id = "idebams24qkagk5c7psd0wtsgxa5nx";
+    std::string client_secret = "";
+    token_request.body() = "client_id=" + client_id + "&client_secret=" + client_secret + "&grant_type=client_credentials";
+    token_request.prepare_payload();
 
-    http::request<http::string_body> req{http::verb::post, "/oauth2/token", 11};
-    req.set(http::field::host, "id.twitch.tv");
-    req.set(http::field::content_type, "application/x-www-form-urlencoded");
-    std::string client_id = "q6yhym92s2q8bou0xx0o4mvq4qexqz";
-    std::string client_secret = "8m8ptibbflgyhobbsdt0jzlg5ulf8a";
-    req.body() = "client_id=" + client_id + "&client_secret=" + client_secret + "&grant_type=client_credentials";
-    req.prepare_payload();
+    http::write(token_socket, token_request);
 
-    http::write(socket, req);
+    beast::flat_buffer token_buffer;
+    http::response<http::dynamic_body> token_response;
+    http::read(token_socket, token_buffer, token_response);
 
+    spdlog::info("Token Response status code: {}", token_response.result_int());
+    spdlog::info("Token Response body: {}", beast::buffers_to_string(token_response.body().data()));
+    EXPECT_EQ(token_response.result(), http::status::ok);
+    nlohmann::json token_json_response = nlohmann::json::parse(beast::buffers_to_string(token_response.body().data()));
+
+    // Extract the "access_token" from the token JSON response
+    std::string access_token = token_json_response["access_token"];
+
+    spdlog::info("Access token: {}", access_token);
+
+    // Create a resolver for the API endpoint
+    tcp::resolver api_resolver(io_context);
+    tcp::resolver::results_type api_endpoints = api_resolver.resolve("api.twitch.tv", "https");
+    ssl::stream<tcp::socket> api_socket(io_context, ssl_context);
+
+    // Connect to the API endpoint
+    boost::asio::connect(api_socket.next_layer(), api_endpoints.begin(), api_endpoints.end());
+    api_socket.handshake(ssl::stream_base::client);
+
+    // Construct the HTTP GET request to check if a specific user is live
+    std::string userLogin = "cruciie"; // Replace with the user's login
+    http::request<http::string_body> req{http::verb::get, "/helix/streams?user_login=" + userLogin, 11};
+    req.set(http::field::host, "api.twitch.tv");
+    req.set(http::field::authorization, "Bearer " + access_token); // Use "Bearer" prefix
+    req.set(http::field::content_type, "application/json");
+    req.set("Client-ID", client_id);
+    // Send the HTTP request to the API endpoint
+    http::write(api_socket, req);
+
+    // Read the HTTP response from the API
     beast::flat_buffer buffer;
     http::response<http::dynamic_body> res;
-    http::read(socket, buffer, res);
+    http::read(api_socket, buffer, res);
 
     spdlog::info("Response status code: {}", res.result_int());
     spdlog::info("Response body: {}", beast::buffers_to_string(res.body().data()));
-    EXPECT_EQ(res.result(), http::status::ok);
-    nlohmann::json json_response = nlohmann::json::parse(beast::buffers_to_string(res.body().data()));
 
-    // Extract the "access_token" from the JSON
-    std::string access_token = json_response["access_token"];
-
-    spdlog::info("Access token: {}", access_token);    
-
-    http::request<http::string_body> req2{http::verb::post, "/helix/polls", 11};
-    req2.set(http::field::host, "api.twitch.tv");
-    req2.set(http::field::authorization, "Bearer " + access_token); // Use "Bearer" prefix
-    req2.set(http::field::content_type, "application/json");
-
-    std::string json_payload = R"(
-        {
-            "broadcaster_id": "123456",
-            "title": "Streaming next Tuesday. Which time works best for you?",
-            "choices": [
-                {"title": "9AM"},
-                {"title": "10AM"},
-                {"title": "7PM"},
-                {"title": "8PM"},
-                {"title": "9PM"}
-            ],
-            "duration": 300
+    // Check if the user is live by parsing the JSON response
+    if (res.result() == http::status::ok) {
+        nlohmann::json json_response;
+        try {
+            json_response = nlohmann::json::parse(beast::buffers_to_string(res.body().data()));
+        } catch (const std::exception& ex) {
+            spdlog::error("Failed to parse JSON response: {}", ex.what());
+            return;
         }
-    )";
 
-    req2.body() = json_payload;
-    req2.prepare_payload();
+        auto streams = json_response["data"];
 
-    // Send the HTTP request
-    http::write(socket, req2);
+        if (!streams.empty() && streams.is_array()) {
+            // The user is live
+            spdlog::info("User is live!");
 
-    // Read the HTTP response
-    beast::flat_buffer buffer2;
-    http::response<http::dynamic_body> res2;
-    http::read(socket, buffer2, res2);
+            // Extract stream details if needed
+            for (const auto& stream : streams) {
+                std::string streamTitle = stream["title"];
+                int viewerCount = stream["viewer_count"];
+                // Extract other stream details as needed
+                // ...
+            }
+        } else {
+            spdlog::info("User is not live.");
+        }
+    } else {
+        spdlog::error("Failed to retrieve stream information. Status code: {}", res.result_int());
+    }
 
-    spdlog::info("Response status code: {}", res2.result_int());
-    spdlog::info("Response body: {}", beast::buffers_to_string(res2.body().data()));
-    EXPECT_EQ(res2.result(), http::status::ok);
+    // Add your assertions here based on the test scenario
 }
 
-/*
-    http::request<http::string_body> req{http::verb::post, "/helix/polls", 11};
-    req.set(http::field::host, "api.twitch.tv");
-    req.set(http::field::authorization, "sm6wd2usxlhz9z2kg0hs8sxhejroz8");
-    req.set(http::field::content_type, "application/json");
-
-    std::string json_payload = R"(
-        {
-            "broadcaster_id": "123456",
-            "title": "Streaming next Tuesday. Which time works best for you?",
-            "choices": [
-                {"title": "9AM"},
-                {"title": "10AM"},
-                {"title": "7PM"},
-                {"title": "8PM"},
-                {"title": "9PM"}
-            ],
-            "duration": 300
-        }
-    )";
-
-    req.body() = json_payload;
-    req.prepare_payload();
-
-    // Send the HTTP request
-    http::write(socket, req);
-
-    // Read the HTTP response
-    beast::flat_buffer buffer;
-    http::response<http::dynamic_body> res;
-    http::read(socket, buffer, res);
-
-    spdlog::info("Response status code: {}", res.result_int());
-    spdlog::info("Response body: {}", beast::buffers_to_string(res.body().data()));
-    EXPECT_EQ(res.result(), http::status::ok);
-
-*/
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
