@@ -110,7 +110,7 @@ TEST_F(MyTestFixture, TestIsUserLive) {
     api_socket.handshake(ssl::stream_base::client);
 
     // Construct the HTTP GET request to check if a specific user is live
-    std::string userLogin = "cruciie"; // Replace with the user's login
+    std::string userLogin = "loltyler1"; // Replace with the user's login
     http::request<http::string_body> req{http::verb::get, "/helix/streams?user_login=" + userLogin, 11};
     req.set(http::field::host, "api.twitch.tv");
     req.set(http::field::authorization, "Bearer " + access_token); // Use "Bearer" prefix
