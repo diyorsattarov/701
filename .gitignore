@@ -60,3 +60,5 @@ test/test_runner
 build.ninja
 
 .vscode/
+
+*.mp4
