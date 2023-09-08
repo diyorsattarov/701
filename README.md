@@ -29,25 +29,24 @@ cmake --build .
 ```
 ## Testing
 ```
-$ ./test/bin/test_main.exe
+admin at ~/workspace/scratch/cpp-stream-record $ ./test/bin/test_main.exe
 [==========] Running 1 test from 1 test suite.
 [----------] Global test environment set-up.
 [----------] 1 test from MyTestFixture
-[ RUN      ] MyTestFixture.TestHttpClient
-[2023-08-26 17:16:46.897] [info] Welcome to spdlog!
-[2023-08-26 17:16:46.898] [info] Start of test fixture!
-[2023-08-26 17:16:47.401] [info] Response status code: 200
-[2023-08-26 17:16:47.402] [info] Response body: 
-{
-    "access_token":".....",
-    "expires_in":5453292,
-    "token_type":"bearer"
-}
-[       OK ] MyTestFixture.TestHttpClient (728 ms)
-[----------] 1 test from MyTestFixture (735 ms total)
+[ RUN      ] MyTestFixture.TestIsUserLive
+[2023-09-07 20:23:00.550] [info] Welcome to spdlog!
+[2023-09-07 20:23:01.086] [info] Token Response status code: 200
+[2023-09-07 20:23:01.086] [info] Token Response body: {"access_token":"xwlpfs6a87a665dvyspo0y4iith4cj","expires_in":5546578,"token_type":"bearer"} 
+
+[2023-09-07 20:23:01.087] [info] Access token: xwlpfs6a87a665dvyspo0y4iith4cj
+[2023-09-07 20:23:01.286] [info] Response status code: 200
+[2023-09-07 20:23:01.286] [info] Response body: {"data":[{"id":"49256531373","user_id":"51496027","user_login":"loltyler1","user_name":"loltyler1","game_id":"21779","game_name":"League of Legends","type":"live","title":"SPIN FASTEST ! hehe so FUN ! GO MORED ! wee feel wind through HAIR and enjoy :D play over . BACK FOCUSED . DOMINATION INCOME !!!! WOOT","viewer_count":13258,"started_at":"2023-09-07T20:29:50Z","language":"en","thumbnail_url":"https://static-cdn.jtvnw.net/previews-ttv/live_user_loltyler1-{width}x{height}.jpg","tag_ids":[],"tags":["English"],"is_mature":false}],"pagination":{"cursor":"eyJiIjp7IkN1cnNvciI6ImV5SnpJam94TXpJMU9DNHhOVFUxT1RRd016Y3hPRFFzSW1RaU9tWmhiSE5sTENKMElqcDBjblZsZlE9PSJ9LCJhIjp7IkN1cnNvciI6IiJ9fQ"}}
+[2023-09-07 20:23:01.287] [info] User is live!
+[       OK ] MyTestFixture.TestIsUserLive (887 ms)
+[----------] 1 test from MyTestFixture (893 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (753 ms total)
+[==========] 1 test from 1 test suite ran. (909 ms total)
 [  PASSED  ] 1 test.
 
 ```
