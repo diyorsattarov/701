@@ -1,5 +1,3 @@
-markdown
-
 # Twitch Stream Record in C++
 
 ## Purpose
