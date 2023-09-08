@@ -46,7 +46,7 @@ TEST_F(MyTestFixture, TestIsUserLive) {
     token_request.set(http::field::host, "id.twitch.tv");
     token_request.set(http::field::content_type, "application/x-www-form-urlencoded");
     std::string client_id = "idebams24qkagk5c7psd0wtsgxa5nx";
-    std::string client_secret = "fvjp3h0ngnrgn0pdhplauymm4debl5";
+    std::string client_secret = "";
     token_request.body() = "client_id=" + client_id + "&client_secret=" + client_secret + "&grant_type=client_credentials";
     token_request.prepare_payload();
 
