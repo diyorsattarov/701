@@ -110,7 +110,7 @@ TEST_F(MyTestFixture, TestIsUserLive) {
     api_socket.handshake(ssl::stream_base::client);
 
     // Construct the HTTP GET request to check if a specific user is live
-    std::string userLogin = "loltyler1"; // Replace with the user's login
+    std::string userLogin = "therealskybri"; // Replace with the user's login
     http::request<http::string_body> req{http::verb::get, "/helix/streams?user_login=" + userLogin, 11};
     req.set(http::field::host, "api.twitch.tv");
     req.set(http::field::authorization, "Bearer " + access_token); // Use "Bearer" prefix
@@ -148,7 +148,7 @@ TEST_F(MyTestFixture, TestIsUserLive) {
             int recordingDuration = 30; // Recording duration in seconds
 
             // Construct the FFmpeg command to start recording
-            std::string ffmpegCommand = "ffmpeg -f gdigrab -r 60 -s 1920x1080 -i desktop -t " + std::to_string(recordingDuration) + " " + outputFileName;
+            std::string ffmpegCommand = "ffmpeg -f gdigrab -r 5 -s 1920x1080 -i desktop -t " + std::to_string(recordingDuration) + " " + outputFileName;
 
             // Execute the FFmpeg command
             int ffmpegExitCode = std::system(ffmpegCommand.c_str());
