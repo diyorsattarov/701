@@ -46,7 +46,7 @@ TEST_F(MyTestFixture, TestIsUserLive) {
     token_request.set(http::field::host, "id.twitch.tv");
     token_request.set(http::field::content_type, "application/x-www-form-urlencoded");
     std::string client_id = "idebams24qkagk5c7psd0wtsgxa5nx";
-    std::string client_secret = "";
+    std::string client_secret = "fvjp3h0ngnrgn0pdhplauymm4debl5";
     token_request.body() = "client_id=" + client_id + "&client_secret=" + client_secret + "&grant_type=client_credentials";
     token_request.prepare_payload();
 
@@ -109,12 +109,20 @@ TEST_F(MyTestFixture, TestIsUserLive) {
             // The user is live
             spdlog::info("User is live!");
 
-            // Extract stream details if needed
-            for (const auto& stream : streams) {
-                std::string streamTitle = stream["title"];
-                int viewerCount = stream["viewer_count"];
-                // Extract other stream details as needed
-                // ...
+            // Start FFmpeg screen recording
+            std::string outputFileName = "stream_record.mp4"; // Set your desired output file name
+            int recordingDuration = 30; // Recording duration in seconds
+
+            // Construct the FFmpeg command to start recording
+            std::string ffmpegCommand = "ffmpeg -f gdigrab -r 60 -s 1920x1080 -i desktop -t " + std::to_string(recordingDuration) + " " + outputFileName;
+
+            // Execute the FFmpeg command
+            int ffmpegExitCode = std::system(ffmpegCommand.c_str());
+
+            if (ffmpegExitCode == 0) {
+                spdlog::info("Recording completed successfully.");
+            } else {
+                spdlog::error("Failed to record the stream.");
             }
         } else {
             spdlog::info("User is not live.");
