@@ -62,3 +62,5 @@ build.ninja
 .vscode/
 
 *.mp4
+
+config.json
