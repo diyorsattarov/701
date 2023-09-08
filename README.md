@@ -128,6 +128,7 @@ video:1322kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing 
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute to this project, feel free to create a pull request.
-License
+
+## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
