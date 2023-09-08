@@ -1,14 +1,12 @@
 markdown
 
-# Twitch Chat Bot in C++
+# Twitch Stream Record in C++
 
-This is a simple Twitch chat bot written in C++ that interacts with the Twitch chat using the Twitch IRC protocol. The bot is designed to join a specified Twitch channel and respond to commands from viewers.
+## Purpose
+
+The purpose of this C++ project is to provide a tool for fetching the live status of a Twitch streamer and initiating the recording of their live stream. With this application, you can easily monitor whether a specific Twitch streamer is currently live and automatically start recording their stream for later viewing. Whether you're an avid gamer, content creator, or simply interested in capturing Twitch streams, this project simplifies the process of stream management and recording.
 
 ## Features
-
-- Join Twitch chat channel and listen for messages.
-- Respond to specific commands from viewers.
-- Customizable command handling and response logic.
 
 ## Prerequisites
 
@@ -22,7 +20,7 @@ Before you begin, ensure you have met the following requirements:
 - nholmman/json
 ## Getting Started
 ```
-git clone https://github.com/diyooor/cpp-chatbot
+git clone https://github.com/diyooor/cpp-stream-record
 cmake .
 cmake --build .
 ./test/bin/test_main.exe
