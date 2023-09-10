@@ -14,30 +14,6 @@ namespace asio = boost::asio;
 namespace ssl = boost::asio::ssl;
 using tcp = boost::asio::ip::tcp;
 
-struct TwitchAPIClient {
-    TwitchAPIClient(asio::io_context& io_ctx, ssl::context& ssl_ctx) : io_context(io_ctx), ssl_context(ssl_ctx) {
-        ssl_context.set_default_verify_paths();
-    }
-
-    void Connect(ssl::stream<tcp::socket>& socket, const std::string& host) {
-        tcp::resolver resolver(io_context);
-        tcp::resolver::results_type endpoints = resolver.resolve(host, "https");
-        boost::asio::connect(socket.next_layer(), endpoints.begin(), endpoints.end());
-        socket.handshake(ssl::stream_base::client);
-    }
-
-    void SendRequest(ssl::stream<tcp::socket>& socket, http::request<http::string_body>& request) {
-        http::write(socket, request);
-    }
-
-    void ReadResponse(ssl::stream<tcp::socket>& socket, beast::flat_buffer& buffer, http::response<http::dynamic_body>& response) {
-        http::read(socket, buffer, response);
-    }
-
-    asio::io_context& io_context;
-    ssl::context& ssl_context;
-};
-
 std::string ReadClientSecretFromConfig() {
     std::ifstream config_file("config.json");
     nlohmann::json config_json;
